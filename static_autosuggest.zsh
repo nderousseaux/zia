@@ -15,5 +15,5 @@ _zsh_autosuggest_fetch_suggestion() {
 	
 	SUGGESTION=$(curl -s -X POST -d "{\"input\": \"${1}\"}" -H "Content-Type: application/json" "${ADDR}/")
 	
-	typeset -g suggestion="${1} ${SUGGESTION}"
+	typeset -g suggestion="${SUGGESTION}"	
 }
