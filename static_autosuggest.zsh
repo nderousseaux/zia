@@ -1,3 +1,4 @@
+ADDR="http://localhost:8000"
 
 # Step 1, find the zsh-autosuggestions plugin (oh-my-zsh or standalone)
 ZSH_AUTOSUGGEST_HOME="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
@@ -10,5 +11,7 @@ source "${ZSH_AUTOSUGGEST_HOME}/zsh-autosuggestions.zsh"
 
 # Step 3, override the _zsh_autosuggest_fetch_suggestion function
 _zsh_autosuggest_fetch_suggestion() {
-  typeset -g suggestion="${1} static autosuggest"
+	SUGGESTION=$(curl -s -X POST -d "{\"input\": \"${1}\"}" -H "Content-Type: application/json" "${ADDR}/")
+	
+  typeset -g suggestion="${1} ${SUGGESTION}"
 }
