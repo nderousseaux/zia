@@ -11,9 +11,18 @@ source "${ZSH_AUTOSUGGEST_HOME}/zsh-autosuggestions.zsh"
 
 # Step 3, override the _zsh_autosuggest_fetch_suggestion function
 _zsh_autosuggest_fetch_suggestion() {
-	sleep 0.5
-	
-	SUGGESTION=$(curl -s -X POST -d "{\"input\": \"${1}\"}" -H "Content-Type: application/json" "${ADDR}/")
+	sleep 0.5 # wait for user to stop typing
+
+	# Build data for request
+	data="{
+		\"prefix\": \"${1}\"
+	}"
+
+	# Send request to server
+	SUGGESTION=$(
+		curl -s -X POST -d "${data}" \
+		 -H "Content-Type: application/json" "${ADDR}/"
+	)
 	
 	typeset -g suggestion="${SUGGESTION}"	
 }
