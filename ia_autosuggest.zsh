@@ -19,10 +19,13 @@ _zsh_autosuggest_fetch_suggestion() {
 	}"
 
 	# Send request to server
-	SUGGESTION=$(
+	RESPONSE=$(
 		curl -s -X POST -d "${data}" \
 		 -H "Content-Type: application/json" "${ADDR}/"
 	)
+	
+	# Extract command from JSON response
+	SUGGESTION=$(echo "$RESPONSE" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"command"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 	
 	typeset -g suggestion="${SUGGESTION}"	
 }
