@@ -13,9 +13,37 @@ source "${ZSH_AUTOSUGGEST_HOME}/zsh-autosuggestions.zsh"
 _zsh_autosuggest_fetch_suggestion() {
 	sleep 0.5 # wait for user to stop typing
 
-	# Build data for request
+	# Get the last 10 commands from history
+	local history_commands=""
+	local cmd_count=0
+	
+	# Function to escape JSON strings
+	escape_json() {
+		echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/	/\\t/g; s/$/\\n/g' | tr -d '\n' | sed 's/\\n$//'
+	}
+	
+	# Read current terminal history in reverse order and get last 10 commands
+	# Use history command to get current session history
+	while IFS= read -r line && [ $cmd_count -lt 10 ]; do
+		if [ -n "$line" ]; then
+			# Remove the history number prefix (e.g., "  123  command" -> "command")
+			clean_line=$(echo "$line" | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//')
+			if [ -n "$clean_line" ]; then
+				escaped_line=$(escape_json "$clean_line")
+				if [ $cmd_count -eq 0 ]; then
+					history_commands="\"$escaped_line\""
+				else
+					history_commands="\"$escaped_line\", $history_commands"
+				fi
+				cmd_count=$((cmd_count + 1))
+			fi
+		fi
+	done < <(history | tail -10 | tac)
+
+	# Build data for request with history
 	data="{
-		\"prefix\": \"${1}\"
+		\"prefix\": \"$(escape_json "${1}")\",
+		\"history\": [$history_commands]
 	}"
 
 	# Send request to server
@@ -25,7 +53,7 @@ _zsh_autosuggest_fetch_suggestion() {
 	)
 	
 	# Extract command from JSON response
-	SUGGESTION=$(echo "$RESPONSE" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"command"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+	SUGGESTION=$(echo "${RESPONSE}" | jq -r '.completion')
 	
 	typeset -g suggestion="${SUGGESTION}"	
 }
